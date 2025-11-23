@@ -152,42 +152,54 @@ class TestBudgetManagement:
     def test_05_expand_budget_card(self, driver):
         """Test expanding a budget card to see details"""
         driver.get(f"{FRONTEND_URL}/dashboard")
-        time.sleep(1)
+        time.sleep(2)
         
-        # Click on a budget card to expand
-        budget_cards = driver.find_elements(By.XPATH, "//div[contains(@class, 'rounded-2xl')]")
-        if len(budget_cards) > 0:
-            budget_cards[0].click()
-            time.sleep(1)
-            # Should show expense form
-            assert "Add Expense" in driver.page_source
+        # Click on a budget card to expand - target the card specifically, avoiding stats cards
+        # We look for the budget name we created or just the first budget card in the list
+        try:
+            # Find the grid that contains budget cards (it's the second grid on the page)
+            # Or look for text "Budget Limit:" which is specific to budget cards
+            budget_cards = driver.find_elements(By.XPATH, "//div[contains(text(), 'Budget Limit:')]/ancestor::div[contains(@class, 'cursor-pointer')]")
+            
+            if len(budget_cards) > 0:
+                budget_cards[0].click()
+                time.sleep(1)
+                # Should show expense form
+                assert "Add Expense" in driver.page_source
+            else:
+                pytest.skip("No budget cards found to expand")
+        except Exception as e:
+            pytest.fail(f"Failed to expand budget card: {e}")
     
     def test_06_edit_budget(self, driver):
         """Test editing a budget name and limit"""
         driver.get(f"{FRONTEND_URL}/dashboard")
-        time.sleep(1)
+        time.sleep(2)
         
         # Find and click edit button (pencil icon)
         try:
+            # Target edit button specifically within a budget card
             edit_buttons = driver.find_elements(By.XPATH, "//button[@title='Edit Budget']")
             if len(edit_buttons) > 0:
                 edit_buttons[0].click()
                 time.sleep(1)
                 
                 # Find input fields and modify
-                inputs = driver.find_elements(By.XPATH, "//input[@type='text']")
-                if len(inputs) > 0:
-                    inputs[0].clear()
-                    inputs[0].send_keys("Updated Budget Name")
+                # The inputs appear when editing mode is active
+                name_input = driver.find_element(By.XPATH, "//input[@value][1]") # First input with value
+                name_input.clear()
+                name_input.send_keys("Updated Budget Name")
                 
                 # Click save
                 save_button = driver.find_element(By.XPATH, "//button[contains(text(), 'Save')]")
                 save_button.click()
-                time.sleep(1)
+                time.sleep(2)
                 
                 assert "Updated Budget Name" in driver.page_source
+            else:
+                pytest.skip("No edit buttons found")
         except Exception as e:
-            pytest.skip(f"Edit functionality not fully testable: {e}")
+            pytest.fail(f"Failed to edit budget: {e}")
 
 
 class TestExpenseManagement:
@@ -196,113 +208,119 @@ class TestExpenseManagement:
     def test_07_add_expense(self, driver):
         """Test adding an expense to a budget"""
         driver.get(f"{FRONTEND_URL}/dashboard")
-        time.sleep(1)
+        time.sleep(2)
         
         # Expand first budget card
-        budget_cards = driver.find_elements(By.XPATH, "//div[contains(@class, 'cursor-pointer')]")
-        if len(budget_cards) > 0:
-            budget_cards[0].click()
-            time.sleep(1)
-            
-            # Fill expense form
-            description_input = driver.find_element(By.XPATH, "//input[@placeholder='Description']")
-            amount_input = driver.find_element(By.XPATH, "//input[@placeholder='Amount']")
-            
-            description_input.send_keys("Test Expense")
-            amount_input.send_keys("50.00")
-            
-            # Click Add button
-            add_button = driver.find_element(By.XPATH, "//button[contains(text(), 'Add')]")
-            add_button.click()
-            
-            time.sleep(2)
-            # Verify expense appears
-            assert "Test Expense" in driver.page_source or "-$50" in driver.page_source
+        try:
+            budget_cards = driver.find_elements(By.XPATH, "//div[contains(text(), 'Budget Limit:')]/ancestor::div[contains(@class, 'cursor-pointer')]")
+            if len(budget_cards) > 0:
+                budget_cards[0].click()
+                time.sleep(1)
+                
+                # Fill expense form
+                description_input = driver.find_element(By.XPATH, "//input[@placeholder='Description']")
+                amount_input = driver.find_element(By.XPATH, "//input[@placeholder='Amount']")
+                
+                description_input.send_keys("Test Expense")
+                amount_input.send_keys("50.00")
+                
+                # Click Add button
+                add_button = driver.find_element(By.XPATH, "//button[contains(text(), 'Add')]")
+                add_button.click()
+                
+                time.sleep(2)
+                # Verify expense appears
+                assert "Test Expense" in driver.page_source or "-$50" in driver.page_source
+            else:
+                pytest.skip("No budget cards found")
+        except Exception as e:
+            pytest.fail(f"Failed to add expense: {e}")
     
     def test_08_view_expenses(self, driver):
         """Test viewing expense list"""
         driver.get(f"{FRONTEND_URL}/dashboard")
-        time.sleep(1)
+        time.sleep(2)
         
         # Expand budget
-        budget_cards = driver.find_elements(By.XPATH, "//div[contains(@class, 'cursor-pointer')]")
-        if len(budget_cards) > 0:
-            budget_cards[0].click()
-            time.sleep(1)
-            
-            # Click to show expenses
-            try:
-                expenses_button = driver.find_element(By.XPATH, "//button[contains(text(), 'Expenses')]")
-                expenses_button.click()
+        try:
+            budget_cards = driver.find_elements(By.XPATH, "//div[contains(text(), 'Budget Limit:')]/ancestor::div[contains(@class, 'cursor-pointer')]")
+            if len(budget_cards) > 0:
+                budget_cards[0].click()
                 time.sleep(1)
-                # Should show expense list or "No expenses" message
-                assert "Expense" in driver.page_source or "No expenses" in driver.page_source
-            except:
-                pass
+                
+                # Click to show expenses - look for the button with arrow
+                expenses_buttons = driver.find_elements(By.XPATH, "//button[contains(text(), 'Expenses')]")
+                if len(expenses_buttons) > 0:
+                    expenses_buttons[0].click()
+                    time.sleep(1)
+                    # Should show expense list or "No expenses" message
+                    assert "Expense" in driver.page_source or "No expenses" in driver.page_source
+        except Exception as e:
+            pytest.fail(f"Failed to view expenses: {e}")
     
     def test_09_edit_expense(self, driver):
         """Test editing an existing expense"""
         driver.get(f"{FRONTEND_URL}/dashboard")
-        time.sleep(1)
+        time.sleep(2)
         
         try:
             # Expand budget and show expenses
-            budget_cards = driver.find_elements(By.XPATH, "//div[contains(@class, 'cursor-pointer')]")
+            budget_cards = driver.find_elements(By.XPATH, "//div[contains(text(), 'Budget Limit:')]/ancestor::div[contains(@class, 'cursor-pointer')]")
             if len(budget_cards) > 0:
                 budget_cards[0].click()
                 time.sleep(1)
                 
                 # Show expenses
-                expenses_button = driver.find_element(By.XPATH, "//button[contains(text(), 'Expenses')]")
-                expenses_button.click()
-                time.sleep(1)
-                
-                # Click edit button on first expense
-                edit_buttons = driver.find_elements(By.XPATH, "//button[@title='Edit']")
-                if len(edit_buttons) > 0:
-                    edit_buttons[0].click()
+                expenses_buttons = driver.find_elements(By.XPATH, "//button[contains(text(), 'Expenses')]")
+                if len(expenses_buttons) > 0:
+                    expenses_buttons[0].click()
                     time.sleep(1)
                     
-                    # Modify description
-                    desc_inputs = driver.find_elements(By.XPATH, "//input[@type='text']")
-                    if len(desc_inputs) > 0:
-                        desc_inputs[-1].clear()
-                        desc_inputs[-1].send_keys("Modified Expense")
-                    
-                    # Click Save
-                    save_button = driver.find_element(By.XPATH, "//button[contains(text(), 'Save')]")
-                    save_button.click()
-                    time.sleep(1)
+                    # Click edit button on first expense
+                    edit_buttons = driver.find_elements(By.XPATH, "//button[@title='Edit']")
+                    if len(edit_buttons) > 0:
+                        edit_buttons[0].click()
+                        time.sleep(1)
+                        
+                        # Modify description - look for input in the editing row
+                        # The editing row has Save/Cancel buttons
+                        desc_input = driver.find_element(By.XPATH, "//button[contains(text(), 'Save')]/ancestor::div[contains(@class, 'grid')]//input[@type='text']")
+                        desc_input.clear()
+                        desc_input.send_keys("Modified Expense")
+                        
+                        # Click Save
+                        save_button = driver.find_element(By.XPATH, "//button[contains(text(), 'Save')]")
+                        save_button.click()
+                        time.sleep(2)
+                        
+                        assert "Modified Expense" in driver.page_source
         except Exception as e:
             pytest.skip(f"Expense edit test skipped: {e}")
     
     def test_10_delete_expense(self, driver):
         """Test deleting an expense"""
         driver.get(f"{FRONTEND_URL}/dashboard")
-        time.sleep(1)
+        time.sleep(2)
         
         try:
             # Expand budget and show expenses
-            budget_cards = driver.find_elements(By.XPATH, "//div[contains(@class, 'cursor-pointer')]")
+            budget_cards = driver.find_elements(By.XPATH, "//div[contains(text(), 'Budget Limit:')]/ancestor::div[contains(@class, 'cursor-pointer')]")
             if len(budget_cards) > 0:
                 budget_cards[0].click()
                 time.sleep(1)
                 
-                expenses_button = driver.find_element(By.XPATH, "//button[contains(text(), 'Expenses')]")
-                expenses_button.click()
-                time.sleep(1)
-                
-                # Get initial expense count
-                initial_source = driver.page_source
-                
-                # Click delete button
-                delete_buttons = driver.find_elements(By.XPATH, "//button[@title='Delete']")
-                if len(delete_buttons) > 0:
-                    delete_buttons[0].click()
-                    time.sleep(2)
+                expenses_buttons = driver.find_elements(By.XPATH, "//button[contains(text(), 'Expenses')]")
+                if len(expenses_buttons) > 0:
+                    expenses_buttons[0].click()
+                    time.sleep(1)
                     
-                    # Verify expense was removed
-                    # Page should refresh or update
+                    # Click delete button
+                    delete_buttons = driver.find_elements(By.XPATH, "//button[@title='Delete']")
+                    if len(delete_buttons) > 0:
+                        delete_buttons[0].click()
+                        time.sleep(2)
+                        
+                        # Verify expense was removed (optional check)
         except Exception as e:
             pytest.skip(f"Expense delete test skipped: {e}")
 
