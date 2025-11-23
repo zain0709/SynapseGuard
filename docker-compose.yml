@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  auth-service:
+    build: ./auth-service
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./auth-service:/app
+    environment:
+      - SECRET_KEY=supersecretkey
+
+  budget-service:
+    build: ./Backend
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./Backend:/app
+    environment:
+      - SECRET_KEY=supersecretkey
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - auth-service
+      - budget-service
