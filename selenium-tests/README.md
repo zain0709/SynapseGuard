@@ -1,34 +1,3 @@
-# SynapseGuard Testing Suite
-
-Comprehensive testing suite for the SynapseGuard Budget Tracker application, including unit tests, integration tests, and end-to-end (E2E) Selenium tests.
-
-## 📋 Test Coverage
-
-### 1. **Unit & Integration Tests** (`test_unit_integration.py`)
-Tests API endpoints and core business logic:
-- ✅ User registration and authentication
-- ✅ Budget CRUD operations (Create, Read, Update, Delete)
-- ✅ Expense CRUD operations
-- ✅ Authorization and security
-- ✅ External API integration (exchange rates)
-
-### 2. **End-to-End Tests** (`test_e2e_comprehensive.py`)
-Tests complete user workflows using Selenium:
-- ✅ User registration flow
-- ✅ Login/logout functionality
-- ✅ Budget creation and management
-- ✅ Expense tracking
-- ✅ UI interactions and navigation
-- ✅ Responsive design (mobile, tablet, desktop)
-
-### 3. **Legacy E2E Tests** (`test_e2e.py`)
-Original basic E2E tests for backward compatibility.
-
-## 🚀 Prerequisites
-
-Before running tests, ensure the following services are running:
-
-1. **Backend Services** (via Docker):
    ```bash
    docker-compose up
    ```
@@ -59,43 +28,27 @@ pip install -r requirements.txt
 
 ### Option 1: Run All Tests (Recommended)
 
-**Windows:**
+**Run everything:**
 ```bash
-run_tests.bat
-```
-
-**Linux/Mac:**
-```bash
-chmod +x run_tests.sh
-./run_tests.sh
+pytest test_suite.py -v
 ```
 
 ### Option 2: Run Individual Test Suites
 
-**Unit & Integration Tests:**
-```bash
-pytest test_unit_integration.py -v
-```
-
-**E2E Selenium Tests:**
-```bash
-pytest test_e2e_comprehensive.py -v
-```
-
 **Specific Test Class:**
 ```bash
-pytest test_unit_integration.py::TestAuthService -v
+pytest test_suite.py::TestAuthService -v
 ```
 
 **Specific Test Function:**
 ```bash
-pytest test_e2e_comprehensive.py::TestAuthenticationFlow::test_01_registration -v
+pytest test_suite.py::TestAuthenticationFlow::test_01_registration -v
 ```
 
 ### Option 3: Run with Coverage Report
 
 ```bash
-pytest test_unit_integration.py --cov=. --cov-report=html --cov-report=term
+pytest test_suite.py --cov=. --cov-report=html --cov-report=term
 ```
 
 View coverage report:
@@ -106,7 +59,7 @@ View coverage report:
 ### Option 4: Run with HTML Report
 
 ```bash
-pytest test_e2e_comprehensive.py --html=test_report.html --self-contained-html
+pytest test_suite.py --html=test_report.html --self-contained-html
 ```
 
 ## 📊 Test Reports
@@ -173,9 +126,7 @@ class TestNavigation:
     - test_11_navbar_navigation()
     - test_12_logout()
 
-class TestResponsiveness:
-    - test_13_mobile_view()
-    - test_14_tablet_view()
+
 ```
 
 ## 🐛 Troubleshooting
